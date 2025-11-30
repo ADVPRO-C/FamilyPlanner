@@ -33,25 +33,49 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
   const [isPending, startTransition] = useTransition()
   const [editingItem, setEditingItem] = useState<PantryItem | null>(null)
   const [activeCategory, setActiveCategory] = useState('Tutti')
+  const [stockFilter, setStockFilter] = useState<'tutti' | 'quasi' | 'esaurito'>('tutti')
 
   const categoryFilters = ['Tutti', 'Alimentari', 'Casa', 'Detersivi', 'Altro']
   const categories = categoryFilters.filter((category) => category !== 'Tutti')
 
+  const normalizedItems = useMemo(() => {
+    return items.map(item => {
+      const qtyValue = parseFloat(item.quantity) || 0
+      const stockStatus = qtyValue <= 0 ? 'esaurito' : qtyValue <= 2 ? 'quasi' : 'ok'
+      return {
+        ...item,
+        qtyValue,
+        stockStatus,
+      }
+    })
+  }, [items])
+
   const filteredItems = useMemo(() => {
-    const list =
+    let list =
       activeCategory === 'Tutti'
-        ? items
-        : items.filter(item => item.category === activeCategory)
+        ? normalizedItems
+        : normalizedItems.filter(item => item.category === activeCategory)
+
+    if (stockFilter === 'quasi') {
+      list = list.filter(item => item.stockStatus === 'quasi')
+    } else if (stockFilter === 'esaurito') {
+      list = list.filter(item => item.stockStatus === 'esaurito')
+    }
 
     return [...list].sort((a, b) => {
-      const aQty = parseFloat(a.quantity) || 0
-      const bQty = parseFloat(b.quantity) || 0
-      if (aQty === bQty) {
+      if (stockFilter === 'tutti') {
+        if (a.qtyValue === b.qtyValue) {
+          return a.name.localeCompare(b.name)
+        }
+        return a.qtyValue - b.qtyValue
+      }
+      // When filtering by status keep same ordering but prioritize lower stock
+      if (a.qtyValue === b.qtyValue) {
         return a.name.localeCompare(b.name)
       }
-      return aQty - bQty
+      return a.qtyValue - b.qtyValue
     })
-  }, [activeCategory, items])
+  }, [activeCategory, normalizedItems, stockFilter])
 
   const stockBadge = (quantity: string) => {
     const value = parseFloat(quantity)
@@ -140,6 +164,23 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
     })
   }
 
+  const categoryBadgeClasses = (category: string) => {
+    switch (category) {
+      case 'Alimentari':
+        return 'bg-green-500 text-white'
+      case 'Casa':
+        return 'bg-red-500 text-white'
+      case 'Detersivi':
+        return 'bg-blue-500 text-white'
+      case 'Altro':
+        return 'bg-violet-600 text-white'
+      case 'Tutti':
+        return 'bg-gray-700 text-white'
+      default:
+        return 'bg-gray-500 text-white'
+    }
+  }
+
   return (
     <div className="space-y-6 pb-20 w-full px-3 sm:px-4 lg:px-8 max-w-full lg:max-w-6xl lg:mx-auto">
       <Card className="border-none shadow-none bg-transparent">
@@ -191,6 +232,23 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
           </Button>
         ))}
       </div>
+      <div className="flex gap-2 overflow-x-auto pb-2">
+        {[
+          { label: 'Tutti', value: 'tutti' as const },
+          { label: 'In esaurimento', value: 'quasi' as const },
+          { label: 'Esauriti', value: 'esaurito' as const },
+        ].map(filter => (
+          <Button
+            key={filter.value}
+            size="sm"
+            variant={stockFilter === filter.value ? 'default' : 'outline'}
+            className="flex-shrink-0"
+            onClick={() => setStockFilter(filter.value)}
+          >
+            {filter.label}
+          </Button>
+        ))}
+      </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {filteredItems.map(item => {
@@ -202,7 +260,11 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
             >
               <div>
                 <p className="font-semibold text-base line-clamp-2">{item.name}</p>
-                <p className="text-xs text-muted-foreground capitalize">{item.category}</p>
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold capitalize ${categoryBadgeClasses(item.category)}`}
+                >
+                  {item.category}
+                </span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium">Quantità: {item.quantity}</span>
