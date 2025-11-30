@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { it } from 'date-fns/locale'
+import { it } from 'date-fns/locale/it'
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getHistory } from '@/app/actions/budget'

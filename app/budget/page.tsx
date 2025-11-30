@@ -1,7 +1,7 @@
 import { getBudget } from '@/app/actions/budget'
 import { BudgetView } from '@/components/budget/budget-view'
 import { format } from 'date-fns'
-import { it } from 'date-fns/locale'
+import { it } from 'date-fns/locale/it'
 
 export const dynamic = 'force-dynamic'
 
