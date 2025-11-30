@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ShoppingCart, Package, PieChart, History, ChefHat } from 'lucide-react'
+import { ShoppingCart, CalendarDays, Package, PieChart, ChefHat } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export function Navbar() {
@@ -15,7 +15,7 @@ export function Navbar() {
     { href: '/lista-spesa', icon: ShoppingCart, label: 'Spesa' },
     { href: '/dispensa', icon: Package, label: 'Dispensa' },
     { href: '/budget', icon: PieChart, label: 'Budget' },
-    { href: '/storico', icon: History, label: 'Storico' },
+    { href: '/pianificazione', icon: CalendarDays, label: 'Pianificazione' },
     { href: '/ricette', icon: ChefHat, label: 'Ricette' },
   ]
 

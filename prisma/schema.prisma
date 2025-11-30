@@ -19,6 +19,7 @@ model User {
   budgets      Budget[]
   history      HistoryItem[]
   recipes      Recipe[]
+  mealPlans    MealPlan[]
 }
 
 model ShoppingItem {
@@ -79,4 +80,20 @@ model Recipe {
   user         User     @relation(fields: [userId], references: [id])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model MealPlan {
+  id        String   @id @default(uuid())
+  date      DateTime
+  breakfast String?
+  snack1    String?
+  lunch     String?
+  snack2    String?
+  dinner    String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
 }
