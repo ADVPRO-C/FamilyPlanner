@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useMemo } from 'react'
 import { Settings, PencilLine } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,21 +26,24 @@ export function BudgetView({ initialBudget, month }: { initialBudget: BudgetData
   const [budget, setBudgetState] = useState(initialBudget)
   const [newAmount, setNewAmount] = useState(initialBudget?.amount?.toString() || '')
   const [newUsedValue, setNewUsedValue] = useState(initialBudget?.used?.toString() || '')
+  const [isBudgetDialogOpen, setIsBudgetDialogOpen] = useState(false)
+  const [isUsageDialogOpen, setIsUsageDialogOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   const amount = budget?.amount || 0
   const used = budget?.used || 0
   const percentage = amount > 0 ? Math.min((used / amount) * 100, 100) : 0
   
-  let color = 'text-green-500'
-  let strokeColor = '#22c55e'
-  if (percentage >= 70 && percentage < 90) {
-    color = 'text-yellow-500'
-    strokeColor = '#eab308'
-  } else if (percentage >= 90) {
-    color = 'text-red-500'
-    strokeColor = '#ef4444'
-  }
+  // Memoize color calculations
+  const { color, strokeColor } = useMemo(() => {
+    if (percentage >= 90) {
+      return { color: 'text-red-500', strokeColor: '#ef4444' }
+    }
+    if (percentage >= 70) {
+      return { color: 'text-yellow-500', strokeColor: '#eab308' }
+    }
+    return { color: 'text-green-500', strokeColor: '#22c55e' }
+  }, [percentage])
 
   const handleSetBudget = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,6 +55,7 @@ export function BudgetView({ initialBudget, month }: { initialBudget: BudgetData
       if (result.success && result.data) {
         setBudgetState(result.data as BudgetData)
         toast.success('Budget aggiornato')
+        setIsBudgetDialogOpen(false) // Auto-close
       } else {
         toast.error('Errore aggiornamento budget')
       }
@@ -70,6 +74,7 @@ export function BudgetView({ initialBudget, month }: { initialBudget: BudgetData
         setBudgetState(updated)
         setNewUsedValue(updated.used.toString())
         toast.success('Spesa aggiornata')
+        setIsUsageDialogOpen(false) // Auto-close
       } else {
         toast.error('Errore aggiornamento spesa')
       }
@@ -115,7 +120,7 @@ export function BudgetView({ initialBudget, month }: { initialBudget: BudgetData
       </div>
 
       <div className="flex flex-col gap-3 w-full sm:flex-row">
-        <Dialog>
+        <Dialog open={isBudgetDialogOpen} onOpenChange={setIsBudgetDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="outline" className="gap-2 flex-1">
               <Settings className="w-4 h-4" />
@@ -140,7 +145,7 @@ export function BudgetView({ initialBudget, month }: { initialBudget: BudgetData
             </form>
           </DialogContent>
         </Dialog>
-        <Dialog>
+        <Dialog open={isUsageDialogOpen} onOpenChange={setIsUsageDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="outline" className="gap-2 flex-1">
               <PencilLine className="w-4 h-4" />
