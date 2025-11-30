@@ -11,7 +11,7 @@ export default async function ShoppingListPage() {
       <header className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Lista della Spesa</h1>
         <span className="text-sm text-muted-foreground bg-secondary px-2 py-1 rounded-full">
-          {items?.filter(i => !i.checked).length || 0} da prendere
+          {items?.filter((i: { checked: boolean }) => !i.checked).length || 0} da prendere
         </span>
       </header>
       
