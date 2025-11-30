@@ -1,14 +1,16 @@
 'use server'
 
 import prisma from '@/lib/prisma'
+import { getOrCreateArenaUser } from '@/lib/user'
 import { revalidatePath } from 'next/cache'
 import { format } from 'date-fns'
 
 export async function getBudget(month: string) {
   // month format: YYYY-MM
   try {
+    const user = await getOrCreateArenaUser()
     const budget = await prisma.budget.findFirst({
-      where: { month }, // Add userId check in real app
+      where: { month, userId: user.id }, // Add userId check in real app
     })
     return { success: true, data: budget }
   } catch (error) {
@@ -19,8 +21,7 @@ export async function getBudget(month: string) {
 
 export async function setBudget(month: string, amount: number) {
   try {
-    const user = await prisma.user.findUnique({ where: { username: 'Arena' } })
-    if (!user) return { success: false, error: 'User not found' }
+    const user = await getOrCreateArenaUser()
 
     const budget = await prisma.budget.upsert({
       where: {
@@ -47,8 +48,9 @@ export async function setBudget(month: string, amount: number) {
 
 export async function getHistory(month: string) {
   try {
+    const user = await getOrCreateArenaUser()
     const history = await prisma.historyItem.findMany({
-      where: { month },
+      where: { month, userId: user.id },
       orderBy: { date: 'desc' },
     })
     return { success: true, data: history }
@@ -58,53 +60,95 @@ export async function getHistory(month: string) {
   }
 }
 
-export async function addToHistory(items: { name: string; quantity: string; price: number }[]) {
+type HistoryItemInput = { name: string; quantity: string; price: number; category?: string }
+
+export async function addToHistory(items: HistoryItemInput[], totalOverride?: number) {
   try {
-    const user = await prisma.user.findUnique({ where: { username: 'Arena' } })
-    if (!user) return { success: false, error: 'User not found' }
+    const user = await getOrCreateArenaUser()
 
     const month = format(new Date(), 'yyyy-MM')
-    const totalSpent = items.reduce((acc, item) => acc + item.price, 0)
+    const totalFromItems = items.reduce((acc, item) => acc + (item.price || 0), 0)
+    const totalSpent =
+      typeof totalOverride === 'number' && !Number.isNaN(totalOverride) && totalOverride > 0
+        ? totalOverride
+        : totalFromItems
 
-    // Create history items
-    await prisma.$transaction(
-      items.map(item => 
-        prisma.historyItem.create({
+    await prisma.$transaction(async (tx) => {
+      await Promise.all(
+        items.map((item) =>
+          tx.historyItem.create({
+            data: {
+              month,
+              product: item.name,
+              quantity: item.quantity,
+              price: item.price || 0,
+              userId: user.id,
+            },
+          })
+        )
+      )
+
+      const budget = await tx.budget.findFirst({
+        where: { userId: user.id, month },
+      })
+
+      if (budget) {
+        await tx.budget.update({
+          where: { id: budget.id },
+          data: { used: budget.used + totalSpent },
+        })
+      } else {
+        await tx.budget.create({
           data: {
+            userId: user.id,
             month,
-            product: item.name,
+            amount: 0,
+            used: totalSpent,
+          },
+        })
+      }
+    })
+
+    // Sync purchased items with pantry
+    for (const item of items) {
+      const existing = await prisma.pantryItem.findFirst({
+        where: {
+          userId: user.id,
+          name: item.name,
+        },
+      })
+
+      if (existing) {
+        const currentQty = parseFloat(existing.quantity)
+        const incomingQty = parseFloat(item.quantity)
+        let updatedQuantity = item.quantity
+
+        if (!Number.isNaN(currentQty) && !Number.isNaN(incomingQty)) {
+          updatedQuantity = (currentQty + incomingQty).toString()
+        }
+
+        await prisma.pantryItem.update({
+          where: { id: existing.id },
+          data: {
+            quantity: updatedQuantity,
+            category: item.category || existing.category,
+          },
+        })
+      } else {
+        await prisma.pantryItem.create({
+          data: {
+            name: item.name,
             quantity: item.quantity,
-            price: item.price,
+            category: item.category || 'Altro',
             userId: user.id,
           },
         })
-      )
-    )
-
-    // Update budget
-    const budget = await prisma.budget.findFirst({
-      where: { userId: user.id, month },
-    })
-
-    if (budget) {
-      await prisma.budget.update({
-        where: { id: budget.id },
-        data: { used: budget.used + totalSpent },
-      })
-    } else {
-      // Create budget if not exists (optional, or just track usage)
-      await prisma.budget.create({
-        data: {
-          userId: user.id,
-          month,
-          amount: 0, // Default 0 if not set
-          used: totalSpent,
-        },
-      })
+      }
     }
 
     revalidatePath('/budget')
     revalidatePath('/storico')
+    revalidatePath('/dispensa')
     return { success: true }
   } catch (error) {
     console.error('Failed to add to history:', error)

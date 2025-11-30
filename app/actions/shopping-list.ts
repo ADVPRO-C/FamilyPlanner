@@ -1,14 +1,14 @@
 'use server'
 
 import prisma from '@/lib/prisma'
+import { getOrCreateArenaUser } from '@/lib/user'
 import { revalidatePath } from 'next/cache'
 
 export async function getShoppingList() {
   try {
-    // In a real app, we would get the userId from the session
-    // For this single-user app, we'll fetch all items or filter by a hardcoded user if needed
-    // Assuming all items belong to "Arena" for now
+    const user = await getOrCreateArenaUser()
     const items = await prisma.shoppingItem.findMany({
+      where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
     })
     return { success: true, data: items }
@@ -28,21 +28,7 @@ export async function addShoppingItem(formData: FormData) {
   }
 
   try {
-    // Hardcoded userId for "Arena"
-    // In production, fetch this from the user table or session
-    // For now, let's assume we need to find or create the user first if not exists?
-    // Or just use a dummy UUID if foreign key constraints allow?
-    // Prisma requires a valid foreign key.
-    // We should probably ensure the user exists in the seed or init.
-    // For this code, I'll assume a user exists or I'll create one on the fly?
-    // Better: Find the user "Arena", if not found create it.
-    
-    let user = await prisma.user.findUnique({ where: { username: 'Arena' } })
-    if (!user) {
-      user = await prisma.user.create({
-        data: { username: 'Arena', password: 'hashed_password_placeholder' }
-      })
-    }
+    const user = await getOrCreateArenaUser()
 
     await prisma.shoppingItem.create({
       data: {

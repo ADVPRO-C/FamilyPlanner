@@ -29,11 +29,11 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
   const [items, setItems] = useState(initialItems)
   const [newItemName, setNewItemName] = useState('')
   const [newItemQuantity, setNewItemQuantity] = useState('1')
-  const [newItemCategory, setNewItemCategory] = useState('Alimentari')
+  const [newItemCategory, setNewItemCategory] = useState('Tutti')
   const [isPending, startTransition] = useTransition()
   const [editingItem, setEditingItem] = useState<PantryItem | null>(null)
 
-  const categories = ['Alimentari', 'Casa', 'Igiene', 'Altro']
+  const categories = ['Tutti', 'Alimentari', 'Casa', 'Igiene', 'Altro']
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault()

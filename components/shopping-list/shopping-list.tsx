@@ -32,12 +32,13 @@ export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] })
   const [items, setItems] = useState(initialItems)
   const [newItemName, setNewItemName] = useState('')
   const [newItemQuantity, setNewItemQuantity] = useState('1')
-  const [newItemCategory, setNewItemCategory] = useState('Alimentari')
+  const [newItemCategory, setNewItemCategory] = useState('Tutti')
   const [isPending, startTransition] = useTransition()
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const [checkoutPrices, setCheckoutPrices] = useState<Record<string, string>>({})
+  const [manualTotal, setManualTotal] = useState('')
 
-  const categories = ['Alimentari', 'Casa', 'Igiene', 'Altro']
+  const categories = ['Tutti', 'Alimentari', 'Casa', 'Igiene', 'Altro']
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,21 +95,27 @@ export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] })
     if (checkedItems.length === 0) return
 
     startTransition(async () => {
-      const historyItems = checkedItems.map(item => ({
-        name: item.name,
-        quantity: item.quantity,
-        price: parseFloat(checkoutPrices[item.id] || '0')
-      }))
-
-      const result = await addToHistory(historyItems)
-      if (result.success) {
-        // Delete checked items
-        for (const item of checkedItems) {
-          await deleteShoppingItem(item.id)
+      const historyItems = checkedItems.map(item => {
+        const parsedPrice = parseFloat(checkoutPrices[item.id] || '0')
+        return {
+          name: item.name,
+          quantity: item.quantity,
+          category: item.category,
+          price: Number.isNaN(parsedPrice) ? 0 : parsedPrice,
         }
+      })
+
+      const requestedTotal = manualTotal.trim() !== '' ? parseFloat(manualTotal) : undefined
+      const totalOverride =
+        requestedTotal !== undefined && !Number.isNaN(requestedTotal) ? requestedTotal : undefined
+
+      const result = await addToHistory(historyItems, totalOverride)
+      if (result.success) {
+        await Promise.all(checkedItems.map(item => deleteShoppingItem(item.id)))
         setItems(items.filter(i => !i.checked))
         setIsCheckoutOpen(false)
         setCheckoutPrices({})
+        setManualTotal('')
         toast.success('Spesa conclusa e budget aggiornato!')
       } else {
         toast.error('Errore durante il checkout')
@@ -121,7 +128,18 @@ export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] })
     return a.checked ? 1 : -1
   })
 
-  const checkedCount = items.filter(i => i.checked).length
+  const checkedItems = items.filter(i => i.checked)
+  const checkedCount = checkedItems.length
+  const calculatedTotal = checkedItems.reduce((acc, item) => {
+    const price = parseFloat(checkoutPrices[item.id] || '0')
+    return acc + (Number.isNaN(price) ? 0 : price)
+  }, 0)
+  const totalInputValue =
+    manualTotal !== ''
+      ? manualTotal
+      : calculatedTotal > 0
+        ? calculatedTotal.toFixed(2)
+        : ''
 
   return (
     <div className="space-y-6 pb-24">
@@ -217,7 +235,7 @@ export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] })
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <p className="text-sm text-muted-foreground">Inserisci i prezzi per aggiornare il budget.</p>
-                {items.filter(i => i.checked).map(item => (
+                {checkedItems.map(item => (
                   <div key={item.id} className="flex items-center gap-2">
                     <div className="flex-1 text-sm truncate">{item.name}</div>
                     <div className="w-24">
@@ -231,6 +249,21 @@ export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] })
                     </div>
                   </div>
                 ))}
+                <div className="flex items-center gap-2 border-t pt-4">
+                  <div className="flex-1 font-medium uppercase text-sm">Totale</div>
+                  <div className="w-28">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="€ 0.00"
+                      value={totalInputValue}
+                      onChange={(e) => setManualTotal(e.target.value)}
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Vuoto = somma automatica
+                    </p>
+                  </div>
+                </div>
               </div>
               <DialogFooter>
                 <Button onClick={handleCheckout} disabled={isPending}>

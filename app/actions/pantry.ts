@@ -1,11 +1,14 @@
 'use server'
 
 import prisma from '@/lib/prisma'
+import { getOrCreateArenaUser } from '@/lib/user'
 import { revalidatePath } from 'next/cache'
 
 export async function getPantryItems() {
   try {
+    const user = await getOrCreateArenaUser()
     const items = await prisma.pantryItem.findMany({
+      where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
     })
     return { success: true, data: items }
@@ -25,11 +28,7 @@ export async function addPantryItem(formData: FormData) {
   }
 
   try {
-    const user = await prisma.user.findUnique({ where: { username: 'Arena' } })
-    if (!user) {
-      // Should handle this better, but assuming user exists or created in shopping list action
-      return { success: false, error: 'User not found' }
-    }
+    const user = await getOrCreateArenaUser()
 
     await prisma.pantryItem.create({
       data: {
