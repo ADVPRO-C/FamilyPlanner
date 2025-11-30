@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server'
-// @ts-expect-error - pdf-parse types are missing or incompatible
-import pdf from 'pdf-parse'
 import mammoth from 'mammoth'
 
 export async function POST(request: Request) {
@@ -16,6 +14,9 @@ export async function POST(request: Request) {
     let text = ''
 
     if (file.type === 'application/pdf') {
+      // Dynamic import for pdf-parse to avoid ESM issues
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const pdf = require('pdf-parse')
       const data = await pdf(buffer)
       text = data.text
     } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
