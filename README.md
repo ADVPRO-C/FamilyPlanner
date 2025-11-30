@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BudgetManager - Family Planner App
 
-## Getting Started
+Applicazione completa per la gestione familiare: lista della spesa, dispensa, budget, storico acquisti e ricette.
 
-First, run the development server:
+## 🚀 Setup Rapido
+
+### 1. Database Neon (Gratuito)
+
+1. Vai su [neon.tech](https://neon.tech)
+2. Crea un account gratuito
+3. Crea un nuovo progetto PostgreSQL
+4. Copia il **connection string**
+
+### 2. Configurazione Locale
 
 ```bash
+# Installa dipendenze
+npm install
+
+# Configura variabili ambiente
+cp .env.example .env
+# Incolla il tuo DATABASE_URL da Neon in .env
+
+# Esegui le migrazioni del database
+npx prisma db push
+
+# Avvia in sviluppo
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Primo Accesso
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Username**: `Arena`
+- **Password**: `Arena`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📦 Funzionalità
 
-## Learn More
+### ✅ Lista della Spesa
+- Aggiungi/modifica/elimina prodotti
+- Checkbox per prodotti acquistati
+- Categorie personalizzate
+- Funzione "Concludi Spesa" per aggiornare budget e storico
 
-To learn more about Next.js, take a look at the following resources:
+### 🏠 Dispensa
+- Gestisci prodotti in casa
+- Modifica quantità
+- Sposta prodotti nella lista della spesa
+- Filtri per categoria
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 💰 Budget
+- Imposta budget mensile
+- Visualizzazione circolare progressiva
+- Colori dinamici: verde (<70%), giallo (70-90%), rosso (90-100%)
+- Aggiornamento automatico dalle spese
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 📊 Storico
+- Visualizzazione acquisti fino a 24 mesi
+- Selezione mese
+- Totale speso per mese
 
-## Deploy on Vercel
+### 👨‍🍳 Ricette
+- Importa ricette da file PDF o Word
+- Estrazione automatica: nome, ingredienti, preparazione
+- CRUD completo (aggiungi, modifica, elimina)
+- Espandi/comprimi ricette
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🚀 Deploy su Vercel
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Push del codice su GitHub
+2. Importa progetto su [vercel.com](https://vercel.com)
+3. Aggiungi la variabile `DATABASE_URL` nelle impostazioni ambiente
+4. Deploy automatico ✨
+
+## 🎨 Tecnologie
+
+- **Frontend**: Next.js 14 (App Router), React, TypeScript
+- **Styling**: Tailwind CSS, shadcn/ui
+- **Database**: PostgreSQL (Neon) + Prisma ORM
+- **Parsing**: pdf-parse, mammoth
+- **UI**: next-themes (dark mode), sonner (notifications)
+
+## 📱 Mobile-First
+
+L'app è ottimizzata per dispositivi mobili con:
+- Navbar fissa in basso
+- Design responsive
+- Touch-friendly
+- Dark mode
+
+---
+
+**Buon utilizzo! 🎉**

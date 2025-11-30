@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shoppingList ShoppingItem[]
+  pantry       PantryItem[]
+  budgets      Budget[]
+  history      HistoryItem[]
+  recipes      Recipe[]
+}
+
+model ShoppingItem {
+  id        String   @id @default(uuid())
+  name      String
+  quantity  String
+  checked   Boolean  @default(false)
+  category  String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PantryItem {
+  id        String   @id @default(uuid())
+  name      String
+  quantity  String
+  category  String
+  lastUsed  DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Budget {
+  id        String   @id @default(uuid())
+  month     String   // Format: YYYY-MM
+  amount    Float
+  used      Float    @default(0)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, month])
+}
+
+model HistoryItem {
+  id        String   @id @default(uuid())
+  month     String   // Format: YYYY-MM
+  product   String
+  quantity  String
+  price     Float
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  date      DateTime @default(now())
+}
+
+model Recipe {
+  id           String   @id @default(uuid())
+  name         String
+  ingredients  String   // JSON string or simple text
+  instructions String
+  category     String
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
