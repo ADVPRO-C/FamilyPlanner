@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     const { username, password } = body
 
     // Hardcoded credentials as per requirements
-    if (username === 'Arena' && password === 'Arena') {
+    if (username === 'Arena' && password === 'arena123') {
       // Set a simple session cookie
       cookies().set('auth_session', 'authenticated', {
         httpOnly: true,

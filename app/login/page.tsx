@@ -52,6 +52,10 @@ export default function LoginPage() {
           <CardTitle className="text-2xl text-center font-bold">BudgetManager</CardTitle>
           <CardDescription className="text-center">
             Enter your credentials to access the planner
+            <br />
+            <span className="text-xs text-muted-foreground mt-1 block">
+              Username: <strong>Arena</strong> • Password: <strong>arena123</strong>
+            </span>
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>
