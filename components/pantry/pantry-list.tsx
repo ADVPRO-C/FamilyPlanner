@@ -141,7 +141,7 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
   }
 
   return (
-    <div className="space-y-6 pb-20 max-w-5xl mx-auto w-full px-2 sm:px-4">
+    <div className="space-y-6 pb-20 w-full px-3 sm:px-4 lg:px-8 max-w-full lg:max-w-6xl lg:mx-auto">
       <Card className="border-none shadow-none bg-transparent">
         <CardContent className="p-0">
           <form onSubmit={handleAddItem} className="flex gap-2 items-end">
