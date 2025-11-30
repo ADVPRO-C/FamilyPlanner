@@ -3,7 +3,7 @@
 import prisma from '@/lib/prisma'
 import { getOrCreateArenaUser } from '@/lib/user'
 import { revalidatePath } from 'next/cache'
-import { startOfWeek, endOfWeek } from 'date-fns'
+import { startOfWeek, endOfWeek, startOfDay } from 'date-fns'
 
 export type MealPlan = {
   id: string
@@ -15,11 +15,16 @@ export type MealPlan = {
   dinner: string | null
 }
 
+// Normalize date to start of day (remove hours/minutes/seconds)
+function normalizeDate(date: Date): Date {
+  return startOfDay(date)
+}
+
 export async function getWeeklyMealPlan(date: Date) {
   try {
     const user = await getOrCreateArenaUser()
-    const start = startOfWeek(date, { weekStartsOn: 1 }) // Monday start
-    const end = endOfWeek(date, { weekStartsOn: 1 })
+    const start = normalizeDate(startOfWeek(date, { weekStartsOn: 1 }))
+    const end = normalizeDate(endOfWeek(date, { weekStartsOn: 1 }))
 
     const meals = await prisma.mealPlan.findMany({
       where: {
@@ -42,12 +47,13 @@ export async function getWeeklyMealPlan(date: Date) {
 export async function updateMeal(date: Date, type: keyof Omit<MealPlan, 'id' | 'date' | 'userId' | 'createdAt' | 'updatedAt'>, value: string) {
   try {
     const user = await getOrCreateArenaUser()
+    const normalizedDate = normalizeDate(date)
     
     // Check if plan exists for this date
     const existing = await prisma.mealPlan.findFirst({
       where: {
         userId: user.id,
-        date: date,
+        date: normalizedDate,
       },
     })
 
@@ -60,7 +66,7 @@ export async function updateMeal(date: Date, type: keyof Omit<MealPlan, 'id' | '
       await prisma.mealPlan.create({
         data: {
           userId: user.id,
-          date: date,
+          date: normalizedDate,
           [type]: value,
         },
       })
@@ -77,8 +83,8 @@ export async function updateMeal(date: Date, type: keyof Omit<MealPlan, 'id' | '
 export async function duplicateWeek(sourceDate: Date, targetDate: Date) {
   try {
     const user = await getOrCreateArenaUser()
-    const sourceStart = startOfWeek(sourceDate, { weekStartsOn: 1 })
-    const sourceEnd = endOfWeek(sourceDate, { weekStartsOn: 1 })
+    const sourceStart = normalizeDate(startOfWeek(sourceDate, { weekStartsOn: 1 }))
+    const sourceEnd = normalizeDate(endOfWeek(sourceDate, { weekStartsOn: 1 }))
     
     const sourceMeals = await prisma.mealPlan.findMany({
       where: {
@@ -90,22 +96,17 @@ export async function duplicateWeek(sourceDate: Date, targetDate: Date) {
       },
     })
 
-    const targetStart = startOfWeek(targetDate, { weekStartsOn: 1 })
-    
-    // Delete existing target week meals? Or overwrite? 
-    // Let's overwrite/upsert.
+    const targetStart = normalizeDate(startOfWeek(targetDate, { weekStartsOn: 1 }))
     
     for (const meal of sourceMeals) {
-      // const dayDiff = meal.date.getDay() - sourceStart.getDay()
-      // Actually simpler: just add difference in weeks
-      // But we need to map Monday to Monday etc.
-      
-      // Calculate offset in milliseconds
-      const timeDiff = meal.date.getTime() - sourceStart.getTime()
-      const newDate = new Date(targetStart.getTime() + timeDiff)
+      // Calculate day offset from source week start
+      const dayOffset = Math.floor((meal.date.getTime() - sourceStart.getTime()) / (1000 * 60 * 60 * 24))
+      const newDate = new Date(targetStart)
+      newDate.setDate(targetStart.getDate() + dayOffset)
+      const normalizedNewDate = normalizeDate(newDate)
 
       const existing = await prisma.mealPlan.findFirst({
-        where: { userId: user.id, date: newDate }
+        where: { userId: user.id, date: normalizedNewDate }
       })
 
       if (existing) {
@@ -123,7 +124,7 @@ export async function duplicateWeek(sourceDate: Date, targetDate: Date) {
         await prisma.mealPlan.create({
           data: {
             userId: user.id,
-            date: newDate,
+            date: normalizedNewDate,
             breakfast: meal.breakfast,
             snack1: meal.snack1,
             lunch: meal.lunch,
