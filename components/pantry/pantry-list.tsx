@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { addPantryItem, deletePantryItem, moveToShoppingList, updatePantryQuantity } from '@/app/actions/pantry'
+import { addPantryItem, deletePantryItem, moveToShoppingList, updatePantryItem } from '@/app/actions/pantry'
 import { toast } from 'sonner'
 
 import {
@@ -124,24 +124,24 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
     })
   }
 
-  const handleUpdateQuantity = async (e: React.FormEvent) => {
+  const handleUpdateItem = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editingItem) return
 
     startTransition(async () => {
-      const result = await updatePantryQuantity(editingItem.id, editingItem.quantity)
+      const result = await updatePantryItem(editingItem.id, editingItem.quantity, editingItem.category)
       if (result.success) {
-        toast.success('Quantity updated')
+        toast.success('Prodotto aggiornato')
         setItems(items.map(i => i.id === editingItem.id ? editingItem : i))
         setEditingItem(null)
       } else {
-        toast.error('Failed to update')
+        toast.error('Impossibile aggiornare il prodotto')
       }
     })
   }
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6 pb-20 max-w-5xl mx-auto w-full px-2 sm:px-4">
       <Card className="border-none shadow-none bg-transparent">
         <CardContent className="p-0">
           <form onSubmit={handleAddItem} className="flex gap-2 items-end">
@@ -196,24 +196,26 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
         {filteredItems.map(item => {
           const badge = stockBadge(item.quantity)
           return (
-            <div key={item.id} className="p-3 border rounded-xl bg-card flex flex-col gap-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="font-semibold">{item.name}</p>
-                  <p className="text-xs text-muted-foreground capitalize">{item.category}</p>
-                </div>
+            <div
+              key={item.id}
+              className="p-4 border rounded-2xl bg-card flex flex-col gap-2 shadow-sm"
+            >
+              <div>
+                <p className="font-semibold text-base line-clamp-2">{item.name}</p>
+                <p className="text-xs text-muted-foreground capitalize">{item.category}</p>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">Quantità: {item.quantity}</span>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className={`w-3 h-3 rounded-full ${badge.color}`} aria-label={badge.label}></span>
                   <span>{badge.label}</span>
                 </div>
               </div>
-              <div className="text-sm font-medium">
-                Quantità: <span>{item.quantity}</span>
-              </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 pt-2">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="icon"
+                  className="flex-1"
                   onClick={() => handleMoveToShopping(item.id)}
                   title="Sposta in lista spesa"
                 >
@@ -222,8 +224,9 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="icon"
+                      className="flex-1"
                       onClick={() => setEditingItem(item)}
                     >
                       <Edit2 className="w-4 h-4 text-muted-foreground" />
@@ -231,22 +234,35 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Modifica quantità</DialogTitle>
+                      <DialogTitle>Modifica prodotto</DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleUpdateQuantity} className="space-y-4">
+                    <form onSubmit={handleUpdateItem} className="space-y-4">
                       <Input
                         value={editingItem?.quantity || ''}
                         onChange={(e) => setEditingItem(prev => prev ? { ...prev, quantity: e.target.value } : null)}
                         placeholder="Nuova quantità"
                       />
+                      <Select
+                        value={editingItem?.category || 'Alimentari'}
+                        onValueChange={(value) =>
+                          setEditingItem(prev => prev ? { ...prev, category: value } : null)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Categoria" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
                       <Button type="submit" className="w-full">Salva</Button>
                     </form>
                   </DialogContent>
                 </Dialog>
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="icon"
-                  className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                  className="flex-1 text-destructive hover:text-destructive/90"
                   onClick={() => handleDelete(item.id)}
                 >
                   <Trash2 className="w-4 h-4" />

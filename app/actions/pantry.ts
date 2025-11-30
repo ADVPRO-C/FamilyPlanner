@@ -96,16 +96,16 @@ export async function moveToShoppingList(id: string) {
   }
 }
 
-export async function updatePantryQuantity(id: string, quantity: string) {
+export async function updatePantryItem(id: string, quantity: string, category: string) {
   try {
     await prisma.pantryItem.update({
       where: { id },
-      data: { quantity },
+      data: { quantity, category },
     })
     revalidatePath('/dispensa')
     return { success: true }
   } catch (error) {
-    console.error('Failed to update quantity:', error)
-    return { success: false, error: 'Failed to update quantity' }
+    console.error('Failed to update pantry item:', error)
+    return { success: false, error: 'Failed to update pantry item' }
   }
 }
