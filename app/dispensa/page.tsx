@@ -8,7 +8,7 @@ export default async function PantryPage() {
 
   return (
     <div className="p-4 w-full max-w-full lg:max-w-5xl mx-auto">
-      <header className="mb-6">
+      <header className="mb-6 px-3 sm:px-4 lg:px-8">
         <h1 className="text-2xl font-bold">Dispensa</h1>
         <p className="text-sm text-muted-foreground">Gestisci i prodotti in casa</p>
       </header>

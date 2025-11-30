@@ -32,6 +32,7 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
   const [newItemCategory, setNewItemCategory] = useState('Alimentari')
   const [isPending, startTransition] = useTransition()
   const [editingItem, setEditingItem] = useState<PantryItem | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState('Tutti')
   const [stockFilter, setStockFilter] = useState<'tutti' | 'quasi' | 'esaurito'>('tutti')
 
@@ -158,6 +159,7 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
         toast.success('Prodotto aggiornato')
         setItems(items.map(i => i.id === editingItem.id ? editingItem : i))
         setEditingItem(null)
+        setIsEditDialogOpen(false) // Close dialog automatically
       } else {
         toast.error('Impossibile aggiornare il prodotto')
       }
@@ -283,13 +285,16 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
                 >
                   <ShoppingCart className="w-4 h-4 text-blue-500" />
                 </Button>
-                <Dialog>
+                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                   <DialogTrigger asChild>
                     <Button
                       variant="outline"
                       size="icon"
                       className="flex-1"
-                      onClick={() => setEditingItem(item)}
+                      onClick={() => {
+                        setEditingItem(item)
+                        setIsEditDialogOpen(true)
+                      }}
                     >
                       <Edit2 className="w-4 h-4 text-muted-foreground" />
                     </Button>
