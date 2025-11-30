@@ -32,13 +32,13 @@ export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] })
   const [items, setItems] = useState(initialItems)
   const [newItemName, setNewItemName] = useState('')
   const [newItemQuantity, setNewItemQuantity] = useState('1')
-  const [newItemCategory, setNewItemCategory] = useState('Tutti')
+  const [newItemCategory, setNewItemCategory] = useState('Alimentari')
   const [isPending, startTransition] = useTransition()
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const [checkoutPrices, setCheckoutPrices] = useState<Record<string, string>>({})
   const [manualTotal, setManualTotal] = useState('')
 
-  const categories = ['Tutti', 'Alimentari', 'Casa', 'Igiene', 'Altro']
+  const categories = ['Tutti', 'Alimentari', 'Casa', 'Detersivi', 'Altro']
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault()

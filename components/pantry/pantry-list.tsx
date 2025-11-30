@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import { Plus, Trash2, ShoppingCart, Edit2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,11 +29,40 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
   const [items, setItems] = useState(initialItems)
   const [newItemName, setNewItemName] = useState('')
   const [newItemQuantity, setNewItemQuantity] = useState('1')
-  const [newItemCategory, setNewItemCategory] = useState('Tutti')
+  const [newItemCategory, setNewItemCategory] = useState('Alimentari')
   const [isPending, startTransition] = useTransition()
   const [editingItem, setEditingItem] = useState<PantryItem | null>(null)
+  const [activeCategory, setActiveCategory] = useState('Tutti')
 
-  const categories = ['Tutti', 'Alimentari', 'Casa', 'Igiene', 'Altro']
+  const categoryFilters = ['Tutti', 'Alimentari', 'Casa', 'Detersivi', 'Altro']
+  const categories = categoryFilters.filter((category) => category !== 'Tutti')
+
+  const filteredItems = useMemo(() => {
+    const list =
+      activeCategory === 'Tutti'
+        ? items
+        : items.filter(item => item.category === activeCategory)
+
+    return [...list].sort((a, b) => {
+      const aQty = parseFloat(a.quantity) || 0
+      const bQty = parseFloat(b.quantity) || 0
+      if (aQty === bQty) {
+        return a.name.localeCompare(b.name)
+      }
+      return aQty - bQty
+    })
+  }, [activeCategory, items])
+
+  const stockBadge = (quantity: string) => {
+    const value = parseFloat(quantity)
+    if (Number.isNaN(value) || value <= 0) {
+      return { color: 'bg-red-500', label: 'Esaurito' }
+    }
+    if (value <= 2) {
+      return { color: 'bg-yellow-400', label: 'Quasi finito' }
+    }
+    return { color: 'bg-green-500', label: 'Disponibile' }
+  }
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -149,63 +178,86 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
         </CardContent>
       </Card>
 
-      <div className="space-y-2">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className="flex items-center justify-between p-3 rounded-lg border bg-card"
+      <div className="flex gap-2 overflow-x-auto pb-2">
+        {categoryFilters.map(category => (
+          <Button
+            key={category}
+            size="sm"
+            variant={category === activeCategory ? 'default' : 'outline'}
+            className="flex-shrink-0"
+            onClick={() => setActiveCategory(category)}
           >
-            <div className="flex flex-col flex-1">
-              <span className="font-medium">{item.name}</span>
-              <span className="text-xs text-muted-foreground">{item.quantity} • {item.category}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleMoveToShopping(item.id)}
-                title="Sposta in lista spesa"
-              >
-                <ShoppingCart className="w-4 h-4 text-blue-500" />
-              </Button>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setEditingItem(item)}
-                  >
-                    <Edit2 className="w-4 h-4 text-muted-foreground" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Modifica quantità</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleUpdateQuantity} className="space-y-4">
-                    <Input
-                      value={editingItem?.quantity || ''}
-                      onChange={(e) => setEditingItem(prev => prev ? { ...prev, quantity: e.target.value } : null)}
-                      placeholder="Nuova quantità"
-                    />
-                    <Button type="submit" className="w-full">Salva</Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-                onClick={() => handleDelete(item.id)}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
+            {category}
+          </Button>
         ))}
-        {items.length === 0 && (
-          <div className="text-center py-10 text-muted-foreground">
-            <p>La dispensa è vuota 📦</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {filteredItems.map(item => {
+          const badge = stockBadge(item.quantity)
+          return (
+            <div key={item.id} className="p-3 border rounded-xl bg-card flex flex-col gap-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-semibold">{item.name}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{item.category}</p>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className={`w-3 h-3 rounded-full ${badge.color}`} aria-label={badge.label}></span>
+                  <span>{badge.label}</span>
+                </div>
+              </div>
+              <div className="text-sm font-medium">
+                Quantità: <span>{item.quantity}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleMoveToShopping(item.id)}
+                  title="Sposta in lista spesa"
+                >
+                  <ShoppingCart className="w-4 h-4 text-blue-500" />
+                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setEditingItem(item)}
+                    >
+                      <Edit2 className="w-4 h-4 text-muted-foreground" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Modifica quantità</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleUpdateQuantity} className="space-y-4">
+                      <Input
+                        value={editingItem?.quantity || ''}
+                        onChange={(e) => setEditingItem(prev => prev ? { ...prev, quantity: e.target.value } : null)}
+                        placeholder="Nuova quantità"
+                      />
+                      <Button type="submit" className="w-full">Salva</Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                  onClick={() => handleDelete(item.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )
+        })}
+        {filteredItems.length === 0 && (
+          <div className="col-span-full text-center py-10 text-muted-foreground">
+            <p>Nessun prodotto in questa categoria</p>
           </div>
         )}
       </div>

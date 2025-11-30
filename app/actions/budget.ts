@@ -46,6 +46,38 @@ export async function setBudget(month: string, amount: number) {
   }
 }
 
+export async function updateBudgetUsage(month: string, used: number) {
+  try {
+    const user = await getOrCreateArenaUser()
+    const existing = await prisma.budget.findFirst({
+      where: {
+        userId: user.id,
+        month,
+      },
+    })
+
+    const budget = existing
+      ? await prisma.budget.update({
+          where: { id: existing.id },
+          data: { used },
+        })
+      : await prisma.budget.create({
+          data: {
+            userId: user.id,
+            month,
+            amount: 0,
+            used,
+          },
+        })
+
+    revalidatePath('/budget')
+    return { success: true, data: budget }
+  } catch (error) {
+    console.error('Failed to update budget usage:', error)
+    return { success: false, error: 'Failed to update budget usage' }
+  }
+}
+
 export async function getHistory(month: string) {
   try {
     const user = await getOrCreateArenaUser()
