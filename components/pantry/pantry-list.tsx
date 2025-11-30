@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, useTransition } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Trash2, ShoppingCart, Edit2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -253,12 +254,17 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <AnimatePresence mode="popLayout">
         {filteredItems.map(item => {
           const badge = stockBadge(item.quantity)
           return (
-            <div
+            <motion.div
+              layout
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
               key={item.id}
-              className="p-4 border rounded-2xl bg-card flex flex-col gap-2 shadow-sm"
+              className="p-4 border rounded-2xl bg-card flex flex-col gap-2 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/30"
             >
               <div>
                 <p className="font-semibold text-base line-clamp-2">{item.name}</p>
@@ -335,9 +341,10 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
-            </div>
+            </motion.div>
           )
         })}
+        </AnimatePresence>
         {filteredItems.length === 0 && (
           <div className="col-span-full text-center py-10 text-muted-foreground">
             <p>Nessun prodotto in questa categoria</p>

@@ -28,6 +28,8 @@ type ShoppingItem = {
   category: string
 }
 
+import { motion, AnimatePresence } from 'framer-motion'
+
 export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] }) {
   const [items, setItems] = useState(initialItems)
   const [newItemName, setNewItemName] = useState('')
@@ -179,15 +181,20 @@ export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] })
         </CardContent>
       </Card>
 
-      <div className="space-y-2">
-        {sortedItems.map((item) => (
-          <div
-            key={item.id}
-            className={cn(
-              "flex items-center justify-between p-3 rounded-lg border bg-card transition-all",
-              item.checked && "opacity-50 bg-muted"
-            )}
-          >
+      <div className="space-y-3">
+        <AnimatePresence mode="popLayout">
+          {sortedItems.map((item) => (
+            <motion.div
+              layout
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, x: -100 }}
+              key={item.id}
+              className={cn(
+                "flex items-center justify-between p-4 rounded-xl border bg-card shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20",
+                item.checked && "opacity-60 bg-muted/50"
+              )}
+            >
             <div className="flex items-center gap-3 flex-1">
               <button
                 onClick={() => handleToggle(item.id, !item.checked)}
@@ -211,8 +218,9 @@ export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] })
             >
               <Trash2 className="w-4 h-4" />
             </Button>
-          </div>
-        ))}
+            </motion.div>
+          ))}
+        </AnimatePresence>
         {items.length === 0 && (
           <div className="text-center py-10 text-muted-foreground">
             <p>La lista è vuota 🎉</p>

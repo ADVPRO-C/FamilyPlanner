@@ -43,7 +43,7 @@ export function RecipeList({ initialRecipes }: { initialRecipes: Recipe[] }) {
         {recipes.map((recipe) => (
           <Card 
             key={recipe.id} 
-            className="cursor-pointer transition-all hover:shadow-md"
+            className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-primary/30"
             onClick={() => setExpandedId(expandedId === recipe.id ? null : recipe.id)}
           >
             <CardHeader className="flex flex-row items-center justify-between p-4 pb-2">

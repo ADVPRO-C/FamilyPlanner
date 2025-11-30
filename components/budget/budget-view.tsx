@@ -122,7 +122,7 @@ export function BudgetView({ initialBudget, month }: { initialBudget: BudgetData
       <div className="flex flex-col gap-3 w-full sm:flex-row">
         <Dialog open={isBudgetDialogOpen} onOpenChange={setIsBudgetDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" className="gap-2 flex-1">
+            <Button variant="outline" className="gap-2 flex-1 transition-all duration-300 hover:shadow-md hover:border-primary/50 hover:-translate-y-0.5">
               <Settings className="w-4 h-4" />
               Imposta Budget
             </Button>
@@ -147,7 +147,7 @@ export function BudgetView({ initialBudget, month }: { initialBudget: BudgetData
         </Dialog>
         <Dialog open={isUsageDialogOpen} onOpenChange={setIsUsageDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" className="gap-2 flex-1">
+            <Button variant="outline" className="gap-2 flex-1 transition-all duration-300 hover:shadow-md hover:border-primary/50 hover:-translate-y-0.5">
               <PencilLine className="w-4 h-4" />
               Modifica spesa
             </Button>
