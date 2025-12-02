@@ -54,7 +54,7 @@ export default function LoginPage() {
             Enter your credentials to access the planner
             <br />
             <span className="text-xs text-muted-foreground mt-1 block">
-              Username: <strong>Arena</strong> • Password: <strong>arena123</strong>
+              Username: <strong>Arena</strong> • Password: <strong>Eulystellina</strong>
             </span>
           </CardDescription>
         </CardHeader>
