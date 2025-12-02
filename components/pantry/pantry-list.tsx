@@ -257,6 +257,22 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
         <AnimatePresence mode="popLayout">
         {filteredItems.map(item => {
           const badge = stockBadge(item.quantity)
+          
+          // Determine card styling based on stock status
+          let cardStyle = "border-border"
+          let statusColor = "text-muted-foreground"
+          
+          if (item.stockStatus === 'esaurito') {
+            cardStyle = "border-red-500/50 bg-red-500/5 shadow-[0_0_15px_rgba(239,68,68,0.15)]"
+            statusColor = "text-red-500"
+          } else if (item.stockStatus === 'quasi') {
+            cardStyle = "border-yellow-500/50 bg-yellow-500/5 shadow-[0_0_15px_rgba(234,179,8,0.15)]"
+            statusColor = "text-yellow-600"
+          } else {
+             cardStyle = "border-border hover:border-primary/30"
+             statusColor = "text-green-600"
+          }
+
           return (
             <motion.div
               layout
@@ -264,45 +280,54 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
               key={item.id}
-              className="p-4 border rounded-2xl bg-card flex flex-col gap-2 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/30"
+              className={`p-4 border rounded-2xl bg-card flex flex-col gap-3 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${cardStyle}`}
             >
-              <div>
-                <p className="font-semibold text-base line-clamp-2">{item.name}</p>
-                <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold capitalize ${categoryBadgeClasses(item.category)}`}
-                >
-                  {item.category}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">Quantità: {item.quantity}</span>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className={`w-3 h-3 rounded-full ${badge.color}`} aria-label={badge.label}></span>
-                  <span>{badge.label}</span>
+              <div className="flex flex-col gap-1">
+                <div className="flex justify-between items-start gap-2">
+                    <p className="font-bold text-lg leading-tight line-clamp-2">{item.name}</p>
+                </div>
+                <div>
+                    <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${categoryBadgeClasses(item.category)}`}
+                    >
+                    {item.category}
+                    </span>
                 </div>
               </div>
-              <div className="flex items-center gap-1 pt-2">
+
+              <div className="flex flex-col gap-1 mt-1">
+                 <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold">{item.quantity}</span>
+                    <span className="text-xs text-muted-foreground font-medium uppercase">Pz</span>
+                 </div>
+                 <div className={`flex items-center gap-1.5 text-xs font-medium ${statusColor}`}>
+                    <span className={`w-2 h-2 rounded-full ${badge.color}`}></span>
+                    <span>{badge.label}</span>
+                 </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2 mt-auto border-t border-border/50">
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="icon"
-                  className="flex-1"
+                  className="flex-1 h-8 hover:bg-blue-50 hover:text-blue-600"
                   onClick={() => handleMoveToShopping(item.id)}
                   title="Sposta in lista spesa"
                 >
-                  <ShoppingCart className="w-4 h-4 text-blue-500" />
+                  <ShoppingCart className="w-4 h-4" />
                 </Button>
                 <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                   <DialogTrigger asChild>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="icon"
-                      className="flex-1"
+                      className="flex-1 h-8 hover:bg-gray-100"
                       onClick={() => {
                         setEditingItem(item)
                         setIsEditDialogOpen(true)
                       }}
                     >
-                      <Edit2 className="w-4 h-4 text-muted-foreground" />
+                      <Edit2 className="w-4 h-4" />
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
@@ -333,9 +358,9 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
                   </DialogContent>
                 </Dialog>
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="icon"
-                  className="flex-1 text-destructive hover:text-destructive/90"
+                  className="flex-1 h-8 text-muted-foreground hover:bg-red-50 hover:text-red-600"
                   onClick={() => handleDelete(item.id)}
                 >
                   <Trash2 className="w-4 h-4" />
