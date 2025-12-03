@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Plus, Trash2, Check, ShoppingBag, ArrowRight, Edit2 } from 'lucide-react'
+import { Plus, Trash2, Check, ShoppingBag, ArrowRight, Edit2, PackageOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -29,9 +29,16 @@ type ShoppingItem = {
   category: string
 }
 
+type PantryItem = {
+  id: string
+  name: string
+  quantity: string
+  category: string
+}
+
 import { motion, AnimatePresence } from 'framer-motion'
 
-export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] }) {
+export function ShoppingList({ initialItems, pantryItems }: { initialItems: ShoppingItem[]; pantryItems: PantryItem[] }) {
   const [items, setItems] = useState(initialItems)
   const [newItemName, setNewItemName] = useState('')
   const [newItemQuantity, setNewItemQuantity] = useState('1')
@@ -44,6 +51,14 @@ export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] })
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   const categories = ['Tutti', 'Alimentari', 'Casa', 'Detersivi', 'Altro']
+
+  // Helper function to get pantry quantity for an item
+  const getPantryQuantity = (itemName: string): string => {
+    const pantryItem = pantryItems.find(p => p.name.toLowerCase() === itemName.toLowerCase())
+    if (!pantryItem) return '0'
+    const parsed = parseFloat(pantryItem.quantity)
+    return isNaN(parsed) ? '0' : parsed.toString()
+  }
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -240,8 +255,15 @@ export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] })
                 {item.checked && <Check className="w-4 h-4" />}
               </button>
               <div className="flex flex-col">
-                <span className={cn("font-medium", item.checked && "line-through")}>{item.name}</span>
-                <span className="text-xs text-muted-foreground">in dispensa {item.quantity} • {item.category}</span>
+                <span className={cn("font-medium", item.checked && "line-through")}>
+                  {item.name} ({item.quantity})
+                </span>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <PackageOpen className="w-3.5 h-3.5" />
+                  <span>{getPantryQuantity(item.name)}</span>
+                  <span>•</span>
+                  <span>{item.category}</span>
+                </div>
               </div>
             </div>
             <div className="flex items-center">

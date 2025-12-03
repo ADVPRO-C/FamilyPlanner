@@ -1,10 +1,12 @@
 import { getShoppingList } from '@/app/actions/shopping-list'
+import { getPantryItems } from '@/app/actions/pantry'
 import { ShoppingList } from '@/components/shopping-list/shopping-list'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ShoppingListPage() {
   const { data: items } = await getShoppingList()
+  const { data: pantryItems } = await getPantryItems()
 
   return (
     <div className="p-4 max-w-md mx-auto">
@@ -15,7 +17,7 @@ export default async function ShoppingListPage() {
         </span>
       </header>
       
-      <ShoppingList initialItems={items || []} />
+      <ShoppingList initialItems={items || []} pantryItems={pantryItems || []} />
     </div>
   )
 }
