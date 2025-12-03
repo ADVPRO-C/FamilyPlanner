@@ -3,6 +3,7 @@
 import prisma from '@/lib/prisma'
 import { getOrCreateArenaUser } from '@/lib/user'
 import { revalidatePath } from 'next/cache'
+import { upsertPantryItem } from './pantry'
 
 export async function getShoppingList() {
   try {
@@ -71,5 +72,21 @@ export async function deleteShoppingItem(id: string) {
   } catch (error) {
     console.error('Failed to delete item:', error)
     return { success: false, error: 'Failed to delete item' }
+  }
+}
+export async function moveShoppingItemToPantry(id: string) {
+  try {
+    const item = await prisma.shoppingItem.findUnique({ where: { id } })
+    if (!item) return { success: false, error: 'Item not found' }
+
+    await upsertPantryItem(item.userId, item.name, item.quantity, item.category)
+    await prisma.shoppingItem.delete({ where: { id } })
+
+    revalidatePath('/lista-spesa')
+    revalidatePath('/dispensa')
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to move item to pantry:', error)
+    return { success: false, error: 'Failed to move item' }
   }
 }

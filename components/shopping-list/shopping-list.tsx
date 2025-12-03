@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Plus, Trash2, Check, ShoppingBag } from 'lucide-react'
+import { Plus, Trash2, Check, ShoppingBag, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { addShoppingItem, toggleShoppingItem, deleteShoppingItem } from '@/app/actions/shopping-list'
+import { addShoppingItem, toggleShoppingItem, deleteShoppingItem, moveShoppingItemToPantry } from '@/app/actions/shopping-list'
 import { addToHistory } from '@/app/actions/budget'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -87,6 +87,20 @@ export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] })
     startTransition(async () => {
       const result = await deleteShoppingItem(id)
       if (!result.success) {
+        setItems(previousItems)
+      }
+    })
+  }
+
+  const handleMoveToPantry = async (id: string) => {
+    const previousItems = [...items]
+    setItems(items.filter(item => item.id !== id))
+    startTransition(async () => {
+      const result = await moveShoppingItemToPantry(id)
+      if (result.success) {
+        toast.success('Spostato in dispensa')
+      } else {
+        toast.error('Errore durante lo spostamento')
         setItems(previousItems)
       }
     })
@@ -210,7 +224,17 @@ export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] })
                 <span className="text-xs text-muted-foreground">{item.quantity} • {item.category}</span>
               </div>
             </div>
-            <Button
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+                onClick={() => handleMoveToPantry(item.id)}
+                title="Sposta in dispensa"
+              >
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+              <Button
               variant="ghost"
               size="icon"
               className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
@@ -218,6 +242,7 @@ export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] })
             >
               <Trash2 className="w-4 h-4" />
             </Button>
+            </div>
             </motion.div>
           ))}
         </AnimatePresence>

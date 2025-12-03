@@ -18,6 +18,65 @@ export async function getPantryItems() {
   }
 }
 
+import { parseQuantity, formatQuantity } from '@/lib/quantity'
+
+export async function upsertPantryItem(userId: string, name: string, quantity: string, category: string) {
+  const normalizedName = name.trim()
+  
+  // Case-insensitive search
+  const existingItem = await prisma.pantryItem.findFirst({
+    where: {
+      userId,
+      name: {
+        equals: normalizedName,
+        mode: 'insensitive',
+      },
+    },
+  })
+
+  if (existingItem) {
+    const existingQty = parseQuantity(existingItem.quantity)
+    const newQty = parseQuantity(quantity)
+
+    // If units match or one is generic 'pz', we can sum them
+    // For simplicity, we'll assume if units are different we just append? 
+    // Or we try to sum values and keep the existing unit if compatible?
+    // The user requirement says: "La quantità verrà sommata al prodotto esistente."
+    // Let's assume same unit or compatible.
+    // If units are different, e.g. "1 L" and "500 ml", this simple logic won't work perfectly without unit conversion.
+    // But given the example "4 pz" + "12pz", it seems unit is usually 'pz' or empty.
+    // Let's sum values and use the unit from the existing item (or the new one if existing is default).
+    
+    let totalValue = existingQty.value + newQty.value
+    let unit = existingQty.unit
+
+    // Simple unit handling: if new unit is different and not 'pz', maybe we should append?
+    // But the requirement is strong on merging.
+    // Let's stick to summing values and using the existing unit.
+    
+    const newQuantityStr = formatQuantity(totalValue, unit)
+
+    await prisma.pantryItem.update({
+      where: { id: existingItem.id },
+      data: {
+        quantity: newQuantityStr,
+        // Update category if the new one is more specific? Or keep existing?
+        // Let's keep existing category unless it's 'Altro' and new one is not.
+        category: existingItem.category === 'Altro' && category !== 'Altro' ? category : existingItem.category,
+      },
+    })
+  } else {
+    await prisma.pantryItem.create({
+      data: {
+        name: normalizedName,
+        quantity,
+        category: category || 'Altro',
+        userId,
+      },
+    })
+  }
+}
+
 export async function addPantryItem(formData: FormData) {
   const name = formData.get('name') as string
   const quantity = formData.get('quantity') as string
@@ -29,15 +88,7 @@ export async function addPantryItem(formData: FormData) {
 
   try {
     const user = await getOrCreateArenaUser()
-
-    await prisma.pantryItem.create({
-      data: {
-        name,
-        quantity,
-        category: category || 'Altro',
-        userId: user.id,
-      },
-    })
+    await upsertPantryItem(user.id, name, quantity, category)
 
     revalidatePath('/dispensa')
     return { success: true }

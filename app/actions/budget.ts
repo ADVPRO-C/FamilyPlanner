@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma'
 import { getOrCreateArenaUser } from '@/lib/user'
 import { revalidatePath } from 'next/cache'
 import { format } from 'date-fns'
+import { upsertPantryItem } from './pantry'
 
 export async function getBudget(month: string) {
   // month format: YYYY-MM
@@ -143,39 +144,7 @@ export async function addToHistory(items: HistoryItemInput[], totalOverride?: nu
 
     // Sync purchased items with pantry
     for (const item of items) {
-      const existing = await prisma.pantryItem.findFirst({
-        where: {
-          userId: user.id,
-          name: item.name,
-        },
-      })
-
-      if (existing) {
-        const currentQty = parseFloat(existing.quantity)
-        const incomingQty = parseFloat(item.quantity)
-        let updatedQuantity = item.quantity
-
-        if (!Number.isNaN(currentQty) && !Number.isNaN(incomingQty)) {
-          updatedQuantity = (currentQty + incomingQty).toString()
-        }
-
-        await prisma.pantryItem.update({
-          where: { id: existing.id },
-          data: {
-            quantity: updatedQuantity,
-            category: item.category || existing.category,
-          },
-        })
-      } else {
-        await prisma.pantryItem.create({
-          data: {
-            name: item.name,
-            quantity: item.quantity,
-            category: item.category || 'Altro',
-            userId: user.id,
-          },
-        })
-      }
+      await upsertPantryItem(user.id, item.name, item.quantity, item.category || 'Altro')
     }
 
     revalidatePath('/budget')
