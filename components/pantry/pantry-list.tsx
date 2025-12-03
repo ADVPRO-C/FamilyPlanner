@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { NumberStepper } from '@/components/ui/number-stepper'
 import { addPantryItem, deletePantryItem, moveToShoppingList, updatePantryItem } from '@/app/actions/pantry'
 import { toast } from 'sonner'
 
@@ -335,11 +336,17 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
                       <DialogTitle>Modifica prodotto</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleUpdateItem} className="space-y-4">
-                      <Input
-                        value={editingItem?.quantity || ''}
-                        onChange={(e) => setEditingItem(prev => prev ? { ...prev, quantity: e.target.value } : null)}
-                        placeholder="Nuova quantità"
-                      />
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Quantità</label>
+                        <NumberStepper
+                          value={editingItem?.quantity || ''}
+                          onChange={(value) => setEditingItem(prev => prev ? { ...prev, quantity: value } : null)}
+                          placeholder="Nuova quantità"
+                          min={0}
+                          max={999}
+                          step={1}
+                        />
+                      </div>
                       <Select
                         value={editingItem?.category || 'Alimentari'}
                         onValueChange={(value) =>
