@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Plus, Trash2, Check, ShoppingBag, ArrowRight } from 'lucide-react'
+import { Plus, Trash2, Check, ShoppingBag, ArrowRight, Edit2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { addShoppingItem, toggleShoppingItem, deleteShoppingItem, moveShoppingItemToPantry } from '@/app/actions/shopping-list'
+import { NumberStepper } from '@/components/ui/number-stepper'
+import { addShoppingItem, toggleShoppingItem, deleteShoppingItem, moveShoppingItemToPantry, updateShoppingItem } from '@/app/actions/shopping-list'
 import { addToHistory } from '@/app/actions/budget'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -39,6 +40,8 @@ export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] })
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const [checkoutPrices, setCheckoutPrices] = useState<Record<string, string>>({})
   const [manualTotal, setManualTotal] = useState('')
+  const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   const categories = ['Tutti', 'Alimentari', 'Casa', 'Detersivi', 'Altro']
 
@@ -102,6 +105,23 @@ export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] })
       } else {
         toast.error('Errore durante lo spostamento')
         setItems(previousItems)
+      }
+    })
+  }
+
+  const handleUpdateItem = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingItem) return
+
+    startTransition(async () => {
+      const result = await updateShoppingItem(editingItem.id, editingItem.name, editingItem.quantity, editingItem.category)
+      if (result.success) {
+        toast.success('Prodotto aggiornato')
+        setItems(items.map(i => i.id === editingItem.id ? editingItem : i))
+        setEditingItem(null)
+        setIsEditDialogOpen(false)
+      } else {
+        toast.error('Impossibile aggiornare il prodotto')
       }
     })
   }
@@ -221,7 +241,7 @@ export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] })
               </button>
               <div className="flex flex-col">
                 <span className={cn("font-medium", item.checked && "line-through")}>{item.name}</span>
-                <span className="text-xs text-muted-foreground">{item.quantity} • {item.category}</span>
+                <span className="text-xs text-muted-foreground">in dispensa {item.quantity} • {item.category}</span>
               </div>
             </div>
             <div className="flex items-center">
@@ -234,6 +254,66 @@ export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] })
               >
                 <ArrowRight className="w-4 h-4" />
               </Button>
+              <Dialog open={isEditDialogOpen && editingItem?.id === item.id} onOpenChange={(open) => {
+                if (!open) {
+                  setIsEditDialogOpen(false)
+                  setEditingItem(null)
+                }
+              }}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hover:bg-gray-100"
+                    onClick={() => {
+                      setEditingItem(item)
+                      setIsEditDialogOpen(true)
+                    }}
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Modifica prodotto</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleUpdateItem} className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Nome</label>
+                      <Input
+                        value={editingItem?.name || ''}
+                        onChange={(e) => setEditingItem(prev => prev ? { ...prev, name: e.target.value } : null)}
+                        placeholder="Nome prodotto"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Quantità</label>
+                      <NumberStepper
+                        value={editingItem?.quantity || ''}
+                        onChange={(value) => setEditingItem(prev => prev ? { ...prev, quantity: value } : null)}
+                        placeholder="Quantità"
+                        min={0}
+                        max={999}
+                        step={1}
+                      />
+                    </div>
+                    <Select
+                      value={editingItem?.category || 'Alimentari'}
+                      onValueChange={(value) =>
+                        setEditingItem(prev => prev ? { ...prev, category: value } : null)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.filter(c => c !== 'Tutti').map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Button type="submit" className="w-full">Salva</Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
               <Button
               variant="ghost"
               size="icon"

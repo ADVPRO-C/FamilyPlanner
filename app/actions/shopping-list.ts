@@ -74,6 +74,20 @@ export async function deleteShoppingItem(id: string) {
     return { success: false, error: 'Failed to delete item' }
   }
 }
+
+export async function updateShoppingItem(id: string, name: string, quantity: string, category: string) {
+  try {
+    await prisma.shoppingItem.update({
+      where: { id },
+      data: { name, quantity, category },
+    })
+    revalidatePath('/lista-spesa')
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to update shopping item:', error)
+    return { success: false, error: 'Failed to update item' }
+  }
+}
 export async function moveShoppingItemToPantry(id: string) {
   try {
     const item = await prisma.shoppingItem.findUnique({ where: { id } })
