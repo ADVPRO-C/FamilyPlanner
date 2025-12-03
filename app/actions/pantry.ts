@@ -23,16 +23,14 @@ import { parseQuantity, formatQuantity } from '@/lib/quantity'
 export async function upsertPantryItem(userId: string, name: string, quantity: string, category: string) {
   const normalizedName = name.trim()
   
-  // Case-insensitive search
-  const existingItem = await prisma.pantryItem.findFirst({
-    where: {
-      userId,
-      name: {
-        equals: normalizedName,
-        mode: 'insensitive',
-      },
-    },
+  // Case-insensitive search - fetch all user items and filter in-memory for reliability
+  const allUserItems = await prisma.pantryItem.findMany({
+    where: { userId },
   })
+  
+  const existingItem = allUserItems.find(
+    item => item.name.toLowerCase() === normalizedName.toLowerCase()
+  )
 
   if (existingItem) {
     const existingQty = parseQuantity(existingItem.quantity)
