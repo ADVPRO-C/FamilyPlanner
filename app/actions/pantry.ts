@@ -47,8 +47,8 @@ export async function upsertPantryItem(userId: string, name: string, quantity: s
     // But given the example "4 pz" + "12pz", it seems unit is usually 'pz' or empty.
     // Let's sum values and use the unit from the existing item (or the new one if existing is default).
     
-    let totalValue = existingQty.value + newQty.value
-    let unit = existingQty.unit
+    const totalValue = existingQty.value + newQty.value
+    const unit = existingQty.unit
 
     // Simple unit handling: if new unit is different and not 'pz', maybe we should append?
     // But the requirement is strong on merging.
