@@ -158,10 +158,11 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
     startTransition(async () => {
       const result = await updatePantryItem(editingItem.id, editingItem.quantity, editingItem.category)
       if (result.success) {
-        toast.success('Prodotto aggiornato')
+        // Update items state AFTER successful save to avoid visual glitch
         setItems(items.map(i => i.id === editingItem.id ? editingItem : i))
-        setEditingItem(null)
         setIsEditDialogOpen(false) // Close dialog automatically
+        setEditingItem(null)
+        toast.success('Prodotto aggiornato')
       } else {
         toast.error('Impossibile aggiornare il prodotto')
       }
