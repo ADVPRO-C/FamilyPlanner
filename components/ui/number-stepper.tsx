@@ -1,8 +1,6 @@
 'use client'
 
 import { Minus, Plus } from 'lucide-react'
-import { Button } from './button'
-import { Input } from './input'
 import { cn } from '@/lib/utils'
 
 interface NumberStepperProps {
@@ -25,6 +23,8 @@ export function NumberStepper({
   placeholder = '0',
 }: NumberStepperProps) {
   const numValue = parseFloat(value) || 0
+  const isAtMin = numValue <= min
+  const isAtMax = numValue >= max
 
   const handleIncrement = () => {
     const newValue = Math.min(numValue + step, max)
@@ -55,38 +55,49 @@ export function NumberStepper({
 
   return (
     <div className={cn('flex items-center gap-2', className)}>
-      <Button
+      {/* Pulsante decremento - usa div+button nativo per evitare problemi di transizione */}
+      <button
         type="button"
-        variant="outline"
-        size="icon"
         onClick={handleDecrement}
-        disabled={numValue <= min}
-        className="h-10 w-10 flex-shrink-0"
+        disabled={isAtMin}
+        className={cn(
+          'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border border-input bg-background',
+          isAtMin 
+            ? 'cursor-not-allowed opacity-50' 
+            : 'hover:bg-accent hover:text-accent-foreground'
+        )}
+        aria-label="Decrementa"
       >
         <Minus className="h-4 w-4" />
-      </Button>
+      </button>
       
-      <Input
+      {/* Input numerico */}
+      <input
         type="number"
         value={value}
         onChange={handleInputChange}
         placeholder={placeholder}
-        className="text-center h-10"
         min={min}
         max={max}
         step={step}
+        className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 text-center text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
       
-      <Button
+      {/* Pulsante incremento */}
+      <button
         type="button"
-        variant="outline"
-        size="icon"
         onClick={handleIncrement}
-        disabled={numValue >= max}
-        className="h-10 w-10 flex-shrink-0"
+        disabled={isAtMax}
+        className={cn(
+          'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border border-input bg-background',
+          isAtMax 
+            ? 'cursor-not-allowed opacity-50' 
+            : 'hover:bg-accent hover:text-accent-foreground'
+        )}
+        aria-label="Incrementa"
       >
         <Plus className="h-4 w-4" />
-      </Button>
+      </button>
     </div>
   )
 }

@@ -16,7 +16,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 
 type PantryItem = {
@@ -318,53 +317,17 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
                 >
                   <ShoppingCart className="w-4 h-4" />
                 </Button>
-                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="flex-1 h-8 hover:bg-gray-100"
-                      onClick={() => {
-                        setEditingItem(item)
-                        setIsEditDialogOpen(true)
-                      }}
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Modifica prodotto</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleUpdateItem} className="space-y-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Quantità</label>
-                        <NumberStepper
-                          value={editingItem?.quantity || ''}
-                          onChange={(value) => setEditingItem(prev => prev ? { ...prev, quantity: value } : null)}
-                          placeholder="Nuova quantità"
-                          min={0}
-                          max={999}
-                          step={1}
-                        />
-                      </div>
-                      <Select
-                        value={editingItem?.category || 'Alimentari'}
-                        onValueChange={(value) =>
-                          setEditingItem(prev => prev ? { ...prev, category: value } : null)
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Categoria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <Button type="submit" className="w-full">Salva</Button>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="flex-1 h-8 hover:bg-gray-100"
+                  onClick={() => {
+                    setEditingItem(item)
+                    setIsEditDialogOpen(true)
+                  }}
+                >
+                  <Edit2 className="w-4 h-4" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -384,6 +347,42 @@ export function PantryList({ initialItems }: { initialItems: PantryItem[] }) {
           </div>
         )}
       </div>
+
+      {/* Dialog spostato fuori dal loop per evitare glitch con le animazioni layout */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifica prodotto</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleUpdateItem} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Quantità</label>
+              <NumberStepper
+                value={editingItem?.quantity || ''}
+                onChange={(value) => setEditingItem(prev => prev ? { ...prev, quantity: value } : null)}
+                placeholder="Nuova quantità"
+                min={0}
+                max={999}
+                step={1}
+              />
+            </div>
+            <Select
+              value={editingItem?.category || 'Alimentari'}
+              onValueChange={(value) =>
+                setEditingItem(prev => prev ? { ...prev, category: value } : null)
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button type="submit" className="w-full">Salva</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
